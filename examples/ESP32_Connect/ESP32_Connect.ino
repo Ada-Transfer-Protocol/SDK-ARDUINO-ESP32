@@ -12,7 +12,7 @@
 const char* ssid     = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
 const char* host     = "192.168.1.10"; // AdaTP Server IP
-const uint16_t port  = 8444;           // Default TCP Port
+const uint16_t port  = 3000;           // Default AdaTP port (WebSocket)
 
 WiFiClient wifiClient;
 AdaTP client(wifiClient);
