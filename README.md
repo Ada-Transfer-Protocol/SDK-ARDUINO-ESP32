@@ -4,7 +4,7 @@ An official, high-performance C++ SDK for connecting ESP32 and ESP8266 devices t
 
 ## Features
 
-- **Full Protocol Support**: Implements AdaTP v2.0/v3.0 Secure Handshake.
+- **Full Protocol Support**: AdaTP v1.0 over WebSocket (/ws) with the X25519 secure handshake.
 - **Hardware Verified Crypto**: Uses native `mbedtls` for hardware-accelerated AES-GCM and X25519 (on supported chips).
 - **Secure**:
   - **X25519** ECDH Key Exchange.
@@ -50,7 +50,7 @@ void setup() {
   WiFi.begin("SSID", "PASS");
   
   // Connect securely (performs Handshake + Auth)
-  if (client.connect("192.168.1.50", 8444, "device_01", "my_secret_token")) {
+  if (client.connect("192.168.1.50", 3000, "device_01", "my_secret_token")) {
     Serial.println("Connected Securely!");
     client.say("Hello World");
   }

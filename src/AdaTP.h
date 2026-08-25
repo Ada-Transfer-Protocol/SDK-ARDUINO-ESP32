@@ -11,6 +11,8 @@
 #include <mbedtls/entropy.h>
 #include <mbedtls/ctr_drbg.h>
 #include <mbedtls/sha256.h>
+#include <mbedtls/sha1.h>
+#include <mbedtls/base64.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 // ESP8266 BearSSL is different, sticking to ESP32 mbedTLS support for now
@@ -36,7 +38,15 @@
 #define MSG_AUTH_PROVE      0x0012
 #define MSG_AUTH_SUCCESS    0x0013 // Auth Result
 #define MSG_TEXT            0x0020
-#define MSG_PING            0x0021
+#define MSG_GAME_STATE      0x0050
+#define MSG_TOOL_CALL       0x0070
+#define MSG_TOOL_RESULT     0x0071
+#define MSG_TOOL_ERROR      0x0072
+#define MSG_PING            0x0080
+#define MSG_PONG            0x0081
+#define MSG_JOIN_ROOM       0x00A0
+#define MSG_ROOM_JOINED     0x00A1
+#define MSG_DISCONNECT      0x00FF
 
 // Packet Flags
 #define FLAG_ENCRYPTED 0x0001
@@ -59,14 +69,22 @@ public:
     AdaTP(Client& client);
     ~AdaTP();
     
-    // Connect to server (Blocking Handshake)
-    bool connect(const char* host, uint16_t port, const char* username, const char* password);
-    
+    // Connect to server over WebSocket (blocking handshake).
+    // Default AdaTP port is 3000; the WebSocket path defaults to "/ws".
+    bool connect(const char* host, uint16_t port, const char* username, const char* password,
+                 const char* path = "/ws");
+
     // Main loop processing (must be called frequently)
     void loop();
-    
+
     // Send Text Message
     void say(const char* text);
+
+    // Join a room (encrypted; confirmation arrives asynchronously)
+    void joinRoom(const char* room);
+
+    // Broadcast a game state payload (JSON recommended) to the room
+    void sendGameState(const char* json);
     
     // Event Callbacks
     typedef void (*ConnectCallback)();
@@ -94,8 +112,10 @@ private:
     uint8_t _serverIvRoot[12];
     bool _secure;
     
-    // mbedTLS Contexts (pointers to avoid including heavy structs in .h if used elsewhere, but here we include headers)
+#ifdef ESP32
+    // mbedTLS context (ESP32 hardware-accelerated AES-GCM)
     mbedtls_gcm_context _gcmCtx;
+#endif
     
     ConnectCallback _onConnect;
     MessageCallback _onMessage;
@@ -104,7 +124,16 @@ private:
     // Helpers
     bool performHandshake(const char* username, const char* password);
     void sendPacket(uint16_t type, const uint8_t* payload, size_t len, bool encrypted = false);
-    bool readHeader(PacketHeader& header);
+    bool parseHeader(const uint8_t* buf, PacketHeader& header);
+
+    // WebSocket transport (minimal RFC 6455 client)
+    bool wsHandshake(const char* host, uint16_t port, const char* path);
+    bool wsSendFrame(uint8_t opcode, const uint8_t* payload, size_t len);
+    // Reads the next complete binary message into a malloc'd buffer
+    // (caller frees). Control frames are handled transparently.
+    // Returns false on timeout/close.
+    bool wsReadMessage(uint8_t** out, size_t* outLen, uint32_t timeoutMs);
+    bool wsReadExact(uint8_t* buf, size_t len, uint32_t timeoutMs);
     
     // Crypto Implementations
     bool crypto_ecdh_keygen(uint8_t* pub, uint8_t* priv);
