@@ -13,6 +13,22 @@ An official, high-performance C++ SDK for connecting ESP32 and ESP8266 devices t
   - Replay Protection (Sequence Numbers).
 - **Lightweight**: Optimized for embedded systems with minimal allocation overhead.
 
+## Protocol v2 (authenticated handshake) — status
+
+This SDK implements the **v1** handshake (unauthenticated X25519), which relies
+on TLS at the edge for server authentication. AdaTP **protocol v2** adds an
+Ed25519-signed, key-pinned handshake that resists an active man-in-the-middle
+**without** TLS — exactly the case that matters for a field device.
+
+v2 is **not yet implemented here** for one concrete reason: it needs **Ed25519
+signature verification**, and the stock ESP32 `mbedtls` build ships **no EdDSA**.
+Adding v2 therefore requires bundling a small Ed25519 verify (e.g. a `ref10`
+port) and validating it on-device. That work is planned but not shipped —
+deliberately not merged unverified. The server and the Node/C/Python/PHP SDKs
+already speak v2 end-to-end; see
+[the spec](https://github.com/Ada-Transfer-Protocol/Server/blob/main/docs/spec/12-authenticated-handshake.md).
+Until then, use `wss://` (TLS) for authentication.
+
 ## Requirements
 
 - **Hardware**: ESP32 (Recommended) or ESP8266.
