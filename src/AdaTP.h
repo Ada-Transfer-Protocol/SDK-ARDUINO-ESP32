@@ -97,9 +97,15 @@ public:
     
     bool isConnected();
 
+    // SDK language (client-side metadata; the wire protocol is
+    // language-neutral). Codes: en tr it fr de zh ja hi ar; default "en".
+    void setLocale(const char* locale);
+    const char* getLocale();
+
 private:
     Client& _client;
     bool _connected;
+    char _locale[6];
     uint8_t _sessionId[16];
     uint64_t _txSeq;
     uint64_t _rxSeq;

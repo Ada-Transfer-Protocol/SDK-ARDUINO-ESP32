@@ -66,3 +66,14 @@ ESP8266 support uses the same `mbedtls` stack but may be slower due to software 
 
 ## License
 MIT
+
+## Language / locale
+
+Set the SDK language for user-facing strings (client-side metadata — the
+wire protocol is language-neutral). Default `en`; supported:
+`en tr it fr de zh ja hi ar`.
+
+```cpp
+AdaTP adatp(wifiClient);
+adatp.setLocale("tr");
+```

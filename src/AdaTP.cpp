@@ -13,6 +13,7 @@ void reverseBytes(uint8_t* start, size_t size) {
 
 AdaTP::AdaTP(Client& client) : _client(client) {
     _connected = false;
+    strncpy(_locale, "en", sizeof(_locale));
     _txSeq = 0;
     _rxSeq = 0;
     _secure = false;
@@ -35,6 +36,21 @@ AdaTP::~AdaTP() {
 void AdaTP::onConnect(ConnectCallback cb) { _onConnect = cb; }
 void AdaTP::onMessage(MessageCallback cb) { _onMessage = cb; }
 void AdaTP::onDisconnect(DisconnectCallback cb) { _onDisconnect = cb; }
+static const char* ADATP_SDK_LOCALES[] = {"en","tr","it","fr","de","zh","ja","hi","ar", nullptr};
+
+void AdaTP::setLocale(const char* locale) {
+    const char* chosen = "en";
+    if (locale) {
+        for (int i = 0; ADATP_SDK_LOCALES[i]; i++) {
+            if (strcmp(ADATP_SDK_LOCALES[i], locale) == 0) { chosen = ADATP_SDK_LOCALES[i]; break; }
+        }
+    }
+    strncpy(_locale, chosen, sizeof(_locale));
+    _locale[sizeof(_locale) - 1] = '\0';
+}
+
+const char* AdaTP::getLocale() { return _locale; }
+
 bool AdaTP::isConnected() { return _connected; }
 
 // -------------------------------------------------------------------------
